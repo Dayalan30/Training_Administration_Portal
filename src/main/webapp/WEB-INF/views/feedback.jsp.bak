@@ -1,0 +1,115 @@
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+    pageEncoding="ISO-8859-1"%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Survey</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            background-image: url('https://img.freepik.com/free-photo/collage-customer-experience-concept_23-2149367121.jpg?w=1480&t=st=1702462472~exp=1702463072~hmac=1dae40ccf435c9bfa9bf5390c385b59892bf622b007eb0d157909363f0facc29');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Style for the form container */
+        form {
+            max-width: 400px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px; /* Adjusted margin for better alignment */
+        }
+
+        /* Style for form labels */
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            text-align: left; /* Adjusted text alignment */
+        }
+
+        /* Style for form input and textarea */
+        input[type="email"],
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        /* Style for the rating */
+        .rating {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .rating label {
+            font-size: 24px;
+            cursor: pointer;
+            margin: 0 5px;
+            transition: transform 0.3s ease; /* Added transition for smooth scaling */
+            order: 1;
+        }
+
+        .rating input {
+            display: none;
+        }
+
+        .rating label:hover,
+        .rating label:hover ~ label,
+        .rating input:checked ~ label {
+            transform: scale(1.5); /* Increased size for selected rating */
+        }
+    </style>
+</head>
+<body>
+
+    
+    
+    <form action="submitFeedback" method="post">
+    <h1>Feedback Form</h1>
+        <label for="traineeEmail">Trainee Email:</label>
+        <input type="email" id="traineeEmail" name="traineeEmail" required><br>
+        
+        <label for="feedbackText">Feedback Text:</label>
+        <textarea id="feedbackText" name="feedbackText" rows="4" cols="50" required></textarea><br>
+        
+        <label for="rating">Rating:</label>
+        <div class="rating">
+            <input type="radio" id="rating5" name="rating" value="5">
+            <label for="rating5">&#128525;</label>
+            
+            <input type="radio" id="rating4" name="rating" value="4">
+            <label for="rating4">&#128578;</label>
+            
+            <input type="radio" id="rating3" name="rating" value="3">
+            <label for="rating3">&#128528;</label>
+            
+            <input type="radio" id="rating2" name="rating" value="2">
+            <label for="rating2">&#128557;</label>
+            
+            <input type="radio" id="rating1" name="rating" value="1">
+            <label for="rating1">&#128545;</label>
+        </div><br>
+
+        
+        <input type="submit" value="Submit Feedback">
+    </form>
+
+</body>
+</html>

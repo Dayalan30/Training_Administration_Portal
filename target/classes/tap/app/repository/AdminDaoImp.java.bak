@@ -1,0 +1,334 @@
+package tap.app.repository;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+import tap.app.entities.AdminReg;
+import tap.app.entities.Assign;
+import tap.app.entities.AssignDetails;
+import tap.app.entities.FeedBack;
+import tap.app.entities.Trainee;
+import tap.app.entities.TraineeAttendance;
+import tap.app.entities.TrainerAttendance;
+import tap.app.entities.TrainerFeedBack;
+import tap.app.entities.AdminLogin;
+import tap.app.utils.*;
+
+public class AdminDaoImp implements AdminDao {
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
+
+	public JdbcTemplate getJdbcTemplate() {
+		return jdbcTemplate;
+	}
+
+	public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
+		this.jdbcTemplate = jdbcTemplate;
+	}
+
+	@Override
+	public int insertAdmin(AdminReg adminReg) {
+
+		String INSERT_QUERY = "INSERT INTO training" + "(fullName, emailId, mobileNo, dateOfBirth, gender,pwd_salt,"
+				+ "pwd_hash,root_admin,status)" + " VALUES (?,?,?,?,?,?,?,?,?)";
+
+		String pwdSalt = Utils.generatePasswordSalt(10);
+		String newPassword = pwdSalt + adminReg.getPassword();
+		String pwdHash = Utils.generatePasswordHash(newPassword);
+
+		System.out.println("\n Password= " + adminReg.getPassword());
+		System.out.println("\n Salt= " + pwdSalt);
+		System.out.println("\n Hash " + pwdHash);
+		return jdbcTemplate.update(INSERT_QUERY, adminReg.getFullName(), adminReg.getEmailId(), adminReg.getMobileNo(),
+				adminReg.getDateOfBirth(), adminReg.getGender(), pwdSalt, pwdHash, adminReg.isRootAdmin(),
+				adminReg.isStatus());
+	}
+
+	@Override
+	public AdminLogin getPasswordData(String emailId) {
+		String GET_PASSWORD = "SELECT pwd_salt,pwd_hash FROM training WHERE emailId=?";
+
+		return jdbcTemplate.queryForObject(GET_PASSWORD, new AdminLoginRowMapper(), emailId);
+	}
+
+	@Override
+	public boolean getRootAdmin(String emailId) {
+		String GET_ROOTADMIN = "SELECT * FROM training WHERE emailId=?";
+
+		AdminReg adminRoot = jdbcTemplate.queryForObject(GET_ROOTADMIN, new AdminRowMapper(), emailId);
+		return adminRoot.isRootAdmin();
+	}
+
+	@Override
+	public boolean getStatusAdmin(String emailId) {
+		String GET_STATUSADMIN = "SELECT * FROM training WHERE emailId=?";
+
+		AdminReg adminRoot = jdbcTemplate.queryForObject(GET_STATUSADMIN, new AdminRowMapper(), emailId);
+		return adminRoot.isStatus();
+	}
+
+	@Override
+	public List<AdminReg> getViewOfAdmin() {
+
+		String GET_ADMIN = "SELECT * FROM training WHERE root_admin=?";
+
+		return jdbcTemplate.query(GET_ADMIN, new AdminRowMapper(), false);
+	}
+
+	@Override
+	public int revokeAdmin(int id) {
+
+		String UPDATE_REVOKE = "UPDATE training SET status=? WHERE id=?";
+		return jdbcTemplate.update(UPDATE_REVOKE, false, id);
+	}
+
+	@Override
+	public int grantAdmin(int id) {
+		String UPDATE_GRANT = "UPDATE training SET status=? WHERE id=?";
+		return jdbcTemplate.update(UPDATE_GRANT, true, id);
+	}
+
+	@Override
+	public AdminReg getProfileAdmin(String emailId) {
+		String GET_PROFILE = "SELECT * FROM training WHERE emailId=?";
+		return jdbcTemplate.queryForObject(GET_PROFILE, new AdminRowMapper(), emailId);
+	}
+
+	@Override
+	public int insertAssign(String batchName, String trainerFirstName, String trainerEmailId, String traineeFirstName,
+			String traineeEmailId
+
+	) {
+		System.out.println(trainerEmailId);
+		String INSERT_ASSIGN = "INSERT INTO assign " + "(batchName,trainerName,trainerEmailId,"
+				+ "traineeName,traineeEmailId)" + "VALUES(?,?,?,?,?)";
+
+		int result = jdbcTemplate.update(INSERT_ASSIGN, batchName, trainerFirstName, trainerEmailId, traineeFirstName,
+				traineeEmailId);
+
+		if (result == 1) {
+			String GET_AVAIl = "UPDATE trainer SET availability=? ,batchName=?WHERE emailId=?";
+			jdbcTemplate.update(GET_AVAIl, false, batchName, trainerEmailId);
+
+			
+			  String TRAINEE_COUNT = "UPDATE trainer\r\n" +
+			  "					SET traineeCount = IF(traineeCount < 10, traineeCount + 1, traineeCount)\r\n"
+			  + "					WHERE emailId = ?"; jdbcTemplate.update(TRAINEE_COUNT,
+			  trainerEmailId);
+			 
+			String GET_ASSIG = "UPDATE trainee SET assigned=? ,batchName=? WHERE emailId=?";
+			jdbcTemplate.update(GET_ASSIG, false, batchName, traineeEmailId);
+
+		}
+
+		return result;
+
+	}
+
+	
+	
+
+	
+	
+	@Override
+	public List<AssignDetails> getJoin() {
+		String GET_JOIN = "SELECT assign.*, coursedetails.startingDate, coursedetails.endingdate, coursedetails.company, coursedetails.course_name, coursedetails.location, coursedetails.batchName\r\n"
+				+ " FROM assign\r\n"
+				+ " JOIN coursedetails ON assign.batchName= coursedetails.batchName";
+
+		return jdbcTemplate.query(GET_JOIN, new AssignDetailsRowMapper());
+	}
+
+	
+	@Override
+	public int updateTrainerAvailability(String trainerEmailId) {
+		String CHANGE_AVAIL="UPDATE trainer AS t"
+				+ " JOIN ( SELECT DISTINCT a.trainerEmailId"
+				+ "    FROM assign AS a"
+				+ "    JOIN coursedetails AS cd ON a.batchName = cd.batchName"
+				+ "    WHERE cd.endingDate < CURDATE()"
+				+ " ) AS joined ON t.emailId = joined.trainerEmailId"
+				+ " SET t.availability = 1,"
+				+ "    t.traineeCount = CASE WHEN t.traineeCount > 0 THEN 0 ELSE t.traineeCount END ";
+		
+	    
+		return jdbcTemplate.update(CHANGE_AVAIL);
+		
+		
+		
+	}
+
+	@Override
+	public int updateTraineeAvailability(String traineeEmailId) {
+	
+		String CHECK_TRAINEE="UPDATE trainee AS tr"
+				+ " JOIN (SELECT DISTINCT a.traineeEmailId"
+				+ "    FROM assign AS a"
+				+ "    JOIN coursedetails AS cd ON a.batchName = cd.batchName"
+				+ "    WHERE cd.endingDate < CURDATE()"
+				+ " ) AS joined ON tr.emailId = joined.traineeEmailId"
+				+ " SET tr.assigned = 1";
+		
+		
+		return jdbcTemplate.update(CHECK_TRAINEE);
+	}
+
+
+
+	@Override
+	public List<AssignDetails> availCourseStatus() {
+	
+
+		String CHECK_COURSE_AVAIL="SELECT * FROM assign JOIN coursedetails ON assign.batchName = coursedetails.batchName"
+				+ " WHERE coursedetails.endingDate >= CURDATE()";
+		
+		return jdbcTemplate.query(CHECK_COURSE_AVAIL,new AssignDetailsRowMapper());
+		
+	}
+
+	@Override
+	public List<AssignDetails> completedCourseStatus() {
+		String CHECK_COURSE_COMP="SELECT * FROM assign JOIN coursedetails ON assign.batchName = coursedetails.batchName"
+				+ " WHERE coursedetails.endingDate < CURDATE()";
+		
+		return jdbcTemplate.query(CHECK_COURSE_COMP,new AssignDetailsRowMapper());
+		
+	}
+
+	@Override
+	public int insertFeedback(FeedBack feedback) {
+		String INSERT_FEEDBACK="INSERT INTO feedback (traineeEmail,trainerName,trainerEmailId,feedbackText, rating, feedbackDate)\r\n"
+				+ "SELECT \r\n"
+				+ "    a.traineeEmailId,?,?,?,?,?"   
+				+ "FROM \r\n"
+				+ "    assign a\r\n"
+				+ "JOIN \r\n"
+				+ "    coursedetails c ON a.batchName = c.batchName\r\n"
+				+ "WHERE \r\n"
+				+ "    a.traineeEmailId = ?\r\n"
+				+ "    AND c.endingDate <=?";
+		
+		return jdbcTemplate.update(INSERT_FEEDBACK,feedback.getTrainerName(),feedback.getTrainerEmailId(),feedback.getFeedbackText(),feedback.getRating(),feedback.getFeedbackDate(),feedback.getTraineeEmail(),feedback.getFeedbackDate());
+		
+		
+		}
+
+	@Override
+	public List<TraineeAttendance> getTraineeAttendance(String traineeEmailId) {
+		
+		String LIST_TRAINEE_ATTENDANCE="SELECT a.*,ta.attendance,\r\n"
+				+ " ta.attendanceDate,COUNT(DISTINCT ta.attendanceDate) AS attendanceCount\r\n"
+				+ "FROM assign a LEFT JOIN traineeAttendance ta ON a.traineeEmailId = ta.emailId\r\n"
+				+ "WHERE a.traineeEmailId =? \r\n"
+				+ "GROUP BY a.id, a.trainerName, a.trainerEmailId, a.traineeName, a.traineeEmailId, a.batchName, ta.attendance,ta.attendanceDate";
+		
+		return jdbcTemplate.query(LIST_TRAINEE_ATTENDANCE, new TraineeAttendanceRowMapper(),traineeEmailId);
+	
+	}
+
+	@Override
+	public List<TraineeAttendance> getCountTraineeAttendance(String trainerEmailId) {
+		String GET_COUNT_TRAINEE_ATTEND="SELECT a.*,ta.attendance,ta.attendanceDate,\r\n"
+				+ "COUNT(DISTINCT ta.attendanceDate) AS attendanceCount FROM assign a\r\n"
+				+ "LEFT JOIN traineeAttendance ta ON a.traineeEmailId = ta.emailId\r\n"
+				+ "WHERE a.traineremailId =?\r\n"
+				+ "GROUP BY a.id, a.trainerName, a.trainerEmailId, a.traineeName, a.traineeEmailId, a.batchName, ta.attendance, ta.attendanceDate";
+		return jdbcTemplate.query(GET_COUNT_TRAINEE_ATTEND,new TraineeAttendanceRowMapper(),trainerEmailId);
+	}
+
+	@Override
+	public List<TrainerFeedBack> getTrainerFeedBackReport(String trainerEmail) {
+		
+		String GET_TRAINER_FEEDBACK_REPORT="SELECT \r\n"
+				+ "    f.rating,f.feedbackDate,f.feedbackText, t.firstName AS trainerFirstName,\r\n"
+				+ "  t.emailId AS trainerEmail FROM feedback f\r\n"
+				+ "INNER JOIN trainer t ON f.trainerEmailId = t.emailId WHERE f.trainerEmailId=?";
+		
+		return jdbcTemplate.query(GET_TRAINER_FEEDBACK_REPORT, new TrainerFeedBackRowMapper(), trainerEmail);
+	}
+
+	@Override
+	public List<TrainerFeedBack> getAllTrainerFeedbackReport() {
+		
+		String GET_ALL_FEEDBACK="SELECT f.rating,f.feedbackDate,f.feedbackText, t.firstName AS trainerFirstName,\r\n"
+	+ " t.emailId AS trainerEmail FROM feedback as f INNER JOIN trainer t ON f.trainerEmailId = t.emailId";
+		 
+		return jdbcTemplate.query(GET_ALL_FEEDBACK, new TrainerFeedBackRowMapper());
+	}
+
+	@Override
+	public List<TraineeAttendance> getAllCountTraineeAttendance(String traineeEmailId) {
+		
+
+      String GET_ALL_COUNT_TRAINEE_ATTENDANCE="SELECT SUM(count) as total_count a.*,ta.attendance,ta.attendanceDate,\r\n"
+				+ "COUNT(DISTINCT ta.attendanceDate) AS attendanceCount FROM assign a\r\n"
+				+ "LEFT JOIN traineeAttendance ta ON a.traineeEmailId = ta.emailId\r\n"
+				+ "GROUP BY a.id, a.trainerName, a.trainerEmailId, a.traineeName, a.traineeEmailId, a.batchName, ta.attendance, ta.attendanceDate "
+				+ "WHERE emailId=?";
+
+      return jdbcTemplate.query(GET_ALL_COUNT_TRAINEE_ATTENDANCE, new TraineeAttendanceRowMapper(),traineeEmailId);
+      
+	}
+	@Override
+	public List<TraineeAttendance> getAllTraineeAttendance() {
+		
+		String GET_ALL_TRAINEE_ATTENDANCE="SELECT a.*,ta.attendance,\r\n"
+				+ " ta.attendanceDate,COUNT(DISTINCT ta.attendanceDate) AS attendanceCount\r\n"
+				+ "FROM assign a LEFT JOIN traineeAttendance ta ON a.traineeEmailId = ta.emailId\r\n"
+				+ "GROUP BY a.id, a.trainerName, a.trainerEmailId, a.traineeName, a.traineeEmailId, a.batchName, ta.attendance,ta.attendanceDate";
+		
+		return jdbcTemplate.query(GET_ALL_TRAINEE_ATTENDANCE, new TraineeAttendanceRowMapper());
+		
+			
+	}
+	@Override
+	public AdminReg getAdmin(int adminId) {
+		String getAdminQuery = "SELECT * FROM training WHERE id = ?";
+
+		return jdbcTemplate.queryForObject(getAdminQuery, new AdminRowMapper(), adminId);
+	}
+
+	@Override
+	public AdminReg getId(int id) {
+		String GET_ADMIN = "SELECT * FROM training WHERE id=?";
+
+		List<AdminReg> AdminList = jdbcTemplate.query(GET_ADMIN, new AdminRowMapper(), id);
+		if (AdminList.size() > 0)
+			return AdminList.get(0);
+		else
+			return null;
+	}
+
+	@Override
+	public int updateAdmin(AdminReg adminreg) {
+		String insertQuery = "UPDATE training SET "
+				+ "fullName = ?, emailId = ?,  mobileNo = ?,dateOfBirth = ?, pwd_salt = ?,pwd_hash = ? "
+				+ "WHERE id = ?";
+
+		String pwdSalt = Utils.generatePasswordSalt(10);
+		String newPassword = pwdSalt + adminreg.getPassword();
+		String pwdHash = Utils.generatePasswordHash(newPassword);
+
+		System.out.println("\n Password= " + adminreg.getPassword());
+		System.out.println("\n Salt= " + pwdSalt);
+		System.out.println("\n Hash " + pwdHash);
+
+		return jdbcTemplate.update(insertQuery, adminreg.getFullName(), adminreg.getEmailId(), adminreg.getMobileNo(),
+				adminreg.getDateOfBirth(),  pwdSalt, pwdHash, adminreg.getId());
+	}
+
+	@Override
+	public List<TrainerAttendance> getTrainerAttendance(String trainerEmailId) {
+		String GET_TRAINER_ATTENDANCE="select*from trainerattendance WHERE emailId=?";
+		return jdbcTemplate.query(GET_TRAINER_ATTENDANCE, new TrainerAttendanceRowMapper(),trainerEmailId);
+	}
+
+	
+
+
+
+	
+	
+}

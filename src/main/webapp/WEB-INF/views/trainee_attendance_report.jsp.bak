@@ -1,0 +1,95 @@
+<%@page import="tap.app.entities.AttendanceCount"%>
+<%@page import="tap.app.entities.TraineeAttendance"%>
+<%@page import="java.util.List"%>
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+    pageEncoding="ISO-8859-1"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Attendance Report</title>
+<style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            
+            height: 100vh;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 80%;
+           
+             margin-top: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+            border-radius: 10px;
+        }
+
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 12px;
+        }
+
+        th {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Trainee Attendance Report</h2>
+
+<table>
+    <tr>
+        <th>TraineeName</th>
+        <th>TraineeEmailId</th>     
+        <th>AttendanceStatus</th>
+        <th>Attendance Date</th>
+        
+    </tr>
+ 
+       <%  List<TraineeAttendance> getAllTrainee = (List<TraineeAttendance>) request.getAttribute("TraineeAttendance");
+        AttendanceCount traineeAttendanceCount=(AttendanceCount) request.getAttribute("TraineeCount");
+        
+        %>
+   <%--  <%
+    List<TraineeAttendance> traineeAttendance = (List<TraineeAttendance>) request.getAttribute("TraineeAttendance");
+    
+    %> --%>
+   <%--  <h3>Total Count:<%=traineeAttendance.get(0).getCount()%></h3> --%>
+   <h3> Total Count: <%=  traineeAttendanceCount.getCount() %></h3>
+   <%  for (int i = 0; i < getAllTrainee.size(); i++) {
+    %>
+    
+    
+    <tr>
+        <td><%= getAllTrainee.get(0).getTraineeName() %></td>
+        <td><%= getAllTrainee.get(0).getTraineeEmailId() %></td>
+        <td><%= getAllTrainee.get(0).getAttendance() %></td>
+        <td><%= getAllTrainee.get(0).getAttendanceDate() %></td>
+       
+    </tr>
+    
+  <%} %>
+   
+</table>
+
+</body>
+</html>

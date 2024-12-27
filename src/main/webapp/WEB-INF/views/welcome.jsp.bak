@@ -1,0 +1,108 @@
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+    pageEncoding="ISO-8859-1"%>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+    <link href="<c:url value='/resources/css/style.css'/>" rel="stylesheet" type="text/css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #eaf6f6; /* Light blue background */
+            color: #333;
+        }
+
+        header {
+            background-color: #007bff; /* Blue header background */
+            color: white;
+            text-align: center;
+            padding: 1em;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        nav {
+            background-color: #0056b3; /* Darker blue navigation background */
+            text-align: center;
+            padding: 1em;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        nav a {
+            text-decoration: none;
+            color: white;
+            padding: 1em;
+            margin: 0 1em;
+            font-weight: bold;
+            transition: color 0.3s ease-in-out;
+        }
+
+        nav a:hover {
+            color: #ffc107; /* Yellow on hover */
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8); /* White glow on hover */
+        }
+
+        section {
+            padding: 2em;
+            text-align: center;
+            background-color: #ffffff; /* White background */
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.3s ease-in-out;
+        }
+
+        section:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Increased box shadow on hover */
+        }
+
+        h2, p {
+            margin-bottom: 1em;
+        }
+
+        footer {
+            background-color: #0056b3; /* Darker blue footer background */
+            color: white;
+            text-align: center;
+            padding: 1em;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .special-effects {
+            background: linear-gradient(to right, #007bff, #00bfff); /* Gradient from light to dark blue */
+            color: white;
+            padding: 1em;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Training Administration Portal</h1>
+        <hr>
+    </header>
+
+    <nav>
+        <a href="#">Home</a>
+        <a href="openAdminLoginPage">Admin Login</a>
+       
+        <a href="trainer/openTrainerLoginPage">Trainer Login</a>
+        <a href="trainee/openTraineeLoginPage">Trainee Login</a>
+        <a href="coursetable/displayTable">Trainee Login</a>
+        <a href="mcq/displayMcqQuestions">mcq test</a>
+        
+    </nav>
+
+   
+
+    <footer>
+        &copy; 2023 Training Administration Portal
+    </footer>
+</body>
+</html>

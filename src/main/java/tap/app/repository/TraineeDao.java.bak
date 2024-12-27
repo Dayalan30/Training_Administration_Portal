@@ -1,0 +1,43 @@
+package tap.app.repository;
+
+import java.util.List;
+
+import tap.app.entities.AssignDetails;
+import tap.app.entities.Trainee;
+import tap.app.entities.TraineeAttendance;
+import tap.app.entities.TraineeLogin;
+import tap.app.entities.Trainer;
+
+public interface TraineeDao {
+
+	int insertTrainee(Trainee trainee);
+	
+	int insertAttendance();
+	
+	int markTotalAttendanceCount(int id);
+
+	TraineeLogin getPassword(String emailId);
+
+	List<Trainee> getViewOfTrainee();
+
+	int revokeTrainee(int id);
+
+	int grantTrainee(int id);
+
+	String getStatusOfTrainee(String emailId);
+
+	Trainee getProfileTrainee(String emailId);
+
+	Trainee getTrainee(int traineeId);
+
+	Trainee getId(int id);
+
+	int updatepTrainee(Trainee trainee);
+
+	int updateTrainee(Trainee trainee);
+
+	List<Trainee> getListOfTrainee(String course);
+
+	List<AssignDetails> getTrainerAssignTrainee(String trainerEmailId);
+	int  insertAttendance(TraineeAttendance traineeAttendance);
+}

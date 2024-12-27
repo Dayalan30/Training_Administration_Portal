@@ -1,0 +1,90 @@
+package tap.app.entities;
+
+import java.sql.Date;
+
+public class TraineeAttendance {
+
+	private int id;
+	private String traineeName;
+	private String traineeEmailId;
+	private String attendance;
+	private Date attendanceDate;
+	private Assign assign;
+	private int traineeId;
+	public TraineeAttendance() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+	public TraineeAttendance(String traineeName, String traineeEmailId, String attendance, Date attendanceDate,
+			int traineeId) {
+		super();
+		this.traineeName = traineeName;
+		this.traineeEmailId = traineeEmailId;
+		this.attendance = attendance;
+		this.attendanceDate = attendanceDate;
+		this.traineeId = traineeId;
+	}
+	public TraineeAttendance(int id, String traineeName, String traineeEmailId, String attendance, Date attendanceDate,
+			Assign assign, int traineeId) {
+		super();
+		this.id = id;
+		this.traineeName = traineeName;
+		this.traineeEmailId = traineeEmailId;
+		this.attendance = attendance;
+		this.attendanceDate = attendanceDate;
+		this.assign = assign;
+		this.traineeId = traineeId;
+	}
+	public int getId() {
+		return id;
+	}
+	public void setId(int id) {
+		this.id = id;
+	}
+	public String getTraineeName() {
+		return traineeName;
+	}
+	public void setTraineeName(String traineeName) {
+		this.traineeName = traineeName;
+	}
+	public String getTraineeEmailId() {
+		return traineeEmailId;
+	}
+	public void setTraineeEmailId(String traineeEmailId) {
+		this.traineeEmailId = traineeEmailId;
+	}
+	public String getAttendance() {
+		return attendance;
+	}
+	public void setAttendance(String attendance) {
+		this.attendance = attendance;
+	}
+	public Date getAttendanceDate() {
+		return attendanceDate;
+	}
+	public void setAttendanceDate(Date attendanceDate) {
+		this.attendanceDate = attendanceDate;
+	}
+	public Assign getAssign() {
+		return assign;
+	}
+	public void setAssign(Assign assign) {
+		this.assign = assign;
+	}
+	public int getTraineeId() {
+		return traineeId;
+	}
+	public void setTraineeId(int traineeId) {
+		this.traineeId = traineeId;
+	}
+	@Override
+	public String toString() {
+		return "TraineeAttendance [id=" + id + ", traineeName=" + traineeName + ", traineeEmailId=" + traineeEmailId
+				+ ", attendance=" + attendance + ", attendanceDate=" + attendanceDate + ", assign=" + assign
+				+ ", traineeId=" + traineeId + "]";
+	}
+	
+	
+	
+	
+}

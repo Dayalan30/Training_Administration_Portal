@@ -1,0 +1,14 @@
+@charset "ISO-8859-1";
+
+body{background-color:lightblue;}
+h2{
+	display: inline;
+	margin-right:50px;
+}
+
+a{
+	color:red;
+}
+a:hover{
+	color:blue;
+}

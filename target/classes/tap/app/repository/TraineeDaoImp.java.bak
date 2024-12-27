@@ -1,0 +1,201 @@
+package tap.app.repository;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import tap.app.entities.AssignDetails;
+import tap.app.entities.TableData;
+import tap.app.entities.Trainee;
+import tap.app.entities.TraineeAttendance;
+import tap.app.entities.TraineeLogin;
+import tap.app.entities.Trainer;
+import tap.app.utils.Utils;
+
+public class TraineeDaoImp implements TraineeDao {
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
+
+	public JdbcTemplate getJdbcTemplate() {
+		return jdbcTemplate;
+	}
+
+	public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
+		this.jdbcTemplate = jdbcTemplate;
+	}
+
+	@Override
+	public int insertTrainee(Trainee trainee) {
+
+		String INSERT_QUERY = "INSERT INTO trainee"
+				+ "(firstName, lastName,userName, emailId,company_name,course_name, dateOfBirth, gender, mobile, country, state, city, rfs,pwd_salt,pwd_hash,status,assigned) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+		String pwdSalt = Utils.generatePasswordSalt(10);
+		String newPassword = pwdSalt + trainee.getPassword();
+		String pwdHash = Utils.generatePasswordHash(newPassword);
+
+		System.out.println("\n Password= " + trainee.getPassword());
+		System.out.println("\n Salt= " + pwdSalt);
+		System.out.println("\n Hash " + pwdHash);
+		boolean status = false;
+
+		return jdbcTemplate.update(INSERT_QUERY, trainee.getFirstName(), trainee.getLastName(), trainee.getUserName(),
+				trainee.getEmailId(), trainee.getCompany(), trainee.getCourse(), trainee.getDateOfBirth(),
+				trainee.getGender(), trainee.getMobileNo(), trainee.getCountry(), trainee.getState(), trainee.getCity(),
+				trainee.getRfs(), pwdSalt, pwdHash, status, trainee.isAssigned());
+	}
+
+	@Override
+	public TraineeLogin getPassword(String emailId) {
+		String GET_PASSWORD = "SELECT pwd_salt,pwd_hash FROM trainee WHERE emailId=?";
+
+		return jdbcTemplate.queryForObject(GET_PASSWORD, new TraineeLoginRowMapper(), emailId);
+
+	}
+
+	@Override
+	public List<Trainee> getViewOfTrainee() {
+		List<Trainee> traineeList = new ArrayList<Trainee>();
+
+		String GET_TRAINEE = "SELECT * FROM trainee";
+
+		traineeList = jdbcTemplate.query(GET_TRAINEE, new TraineeRowMapper());
+		return traineeList;
+	}
+
+	@Override
+	public int revokeTrainee(int id) {
+		String UPDATE_REVOKE = "UPDATE trainee SET status='N' WHERE id=?";
+		return jdbcTemplate.update(UPDATE_REVOKE, id);
+
+	}
+
+	@Override
+	public int grantTrainee(int id) {
+		String UPDATE_GRANT = "UPDATE trainee SET status='A' WHERE id=?";
+		return jdbcTemplate.update(UPDATE_GRANT, id);
+
+	}
+
+	@Override
+	public String getStatusOfTrainee(String emailId) {
+
+		String GET_STATUS = "SELECT * FROM trainee WHERE emailId=?";
+
+		return jdbcTemplate.query(GET_STATUS, new TraineeRowMapper(), emailId).get(0).getStatus();
+
+	}
+
+	@Override
+	public Trainee getProfileTrainee(String emailId) {
+
+		String GET_PROFILE = "SELECT * FROM trainee WHERE emailId=?";
+
+		return jdbcTemplate.queryForObject(GET_PROFILE, new TraineeRowMapper(), emailId);
+	}
+
+	@Override
+	public Trainee getTrainee(int traineeId) {
+		String getTraineeQuery = "SELECT * FROM trainee WHERE id = ?";
+
+		return jdbcTemplate.queryForObject(getTraineeQuery, new TraineeRowMapper(), traineeId);
+	}
+	//Admin Update
+	@Override
+	public int updatepTrainee(Trainee trainee) {
+		String insertQuery = "UPDATE trainee SET "
+				+ "firstName = ?, lastName = ?,userName = ?, emailId = ?,company_name = ?,course_name = ?, dateOfBirth = ?, gender = ?, mobile = ?, country = ?, state = ?, city = ?, rfs = ?,pwd_salt = ?,pwd_hash = ? "
+				+ "WHERE id = ?";
+
+		String pwdSalt = Utils.generatePasswordSalt(10);
+		String newPassword = pwdSalt + trainee.getPassword();
+		String pwdHash = Utils.generatePasswordHash(newPassword);
+
+		System.out.println("\n Password= " + trainee.getPassword());
+		System.out.println("\n Salt= " + pwdSalt);
+		System.out.println("\n Hash " + pwdHash);
+
+		return jdbcTemplate.update(insertQuery, trainee.getFirstName(), trainee.getLastName(), trainee.getUserName(),
+				trainee.getEmailId(), trainee.getCompany(), trainee.getCourse(), trainee.getDateOfBirth(),
+				trainee.getGender(), trainee.getMobileNo(), trainee.getCountry(), trainee.getState(), trainee.getCity(),
+				trainee.getRfs(), pwdSalt, pwdHash, trainee.getId());
+	}
+	@Override
+	public Trainee getId(int id) {
+		String GET_TRAINEE = "SELECT * FROM trainee WHERE id=?";
+
+		List<Trainee> trainerList = jdbcTemplate.query(GET_TRAINEE, new TraineeRowMapper(), id);
+		if (trainerList.size() > 0)
+			return trainerList.get(0);
+		else
+			return null;
+	}
+
+	@Override
+	public int updateTrainee(Trainee trainee) {
+		String insertQuery = "UPDATE trainee SET "
+				+ "firstName = ?, lastName = ?,userName = ?, emailId = ?, dateOfBirth = ?, gender = ?, mobile = ?, country = ?, state = ?, city = ?, rfs = ?,pwd_salt = ?,pwd_hash = ? "
+				+ "WHERE id = ?";
+
+		String pwdSalt = Utils.generatePasswordSalt(10);
+		String newPassword = pwdSalt + trainee.getPassword();
+		String pwdHash = Utils.generatePasswordHash(newPassword);
+
+		System.out.println("\n Password= " + trainee.getPassword());
+		System.out.println("\n Salt= " + pwdSalt);
+		System.out.println("\n Hash " + pwdHash);
+
+		return jdbcTemplate.update(insertQuery, trainee.getFirstName(), trainee.getLastName(), trainee.getUserName(),
+				trainee.getEmailId(), trainee.getDateOfBirth(),
+				trainee.getGender(), trainee.getMobileNo(), trainee.getCountry(), trainee.getState(), trainee.getCity(),
+				trainee.getRfs(), pwdSalt, pwdHash, trainee.getId());
+	}
+	@Override
+	public List<Trainee> getListOfTrainee(String course) {
+		
+		String GET_LIST="SELECT * FROM trainee WHERE assigned=? and course_name=?";
+		return jdbcTemplate.query(GET_LIST,new TraineeRowMapper(),1,course);
+		
+	}
+	@Override
+	public List<AssignDetails> getTrainerAssignTrainee(String traineeEmailId) {
+		
+		String GET_TRAINER_ASSIGN="SELECT assign.*, coursedetails.startingDate, coursedetails.endingdate, coursedetails.company, coursedetails.course_name, coursedetails.location,coursedetails.batchName\r\n"
+				+ "FROM assign\r\n"
+				+ "JOIN coursedetails ON assign.batchName= coursedetails.batchName WHERE traineeEmailId=? and coursedetails.endingDate >= CURDATE()";
+		return jdbcTemplate.query(GET_TRAINER_ASSIGN, new AssignDetailsRowMapper(),traineeEmailId );
+		
+		
+		
+	}
+	@Override
+	public int insertAttendance(TraineeAttendance traineeAttendance) {
+		//`id`, `firstName`, `emailId`, `attendance`, `attendanceDate`, `trainee_id`
+	  String INSERT_ATTENDANCE="insert into traineeattendance(firstName,emailId,attendance,attendanceDate,trainee_id) values(?,?,?,?,?)";
+	  		
+		return jdbcTemplate.update(INSERT_ATTENDANCE,traineeAttendance.getTraineeName(),traineeAttendance.getTraineeEmailId(),
+				traineeAttendance.getAttendance(),traineeAttendance.getAttendanceDate(),traineeAttendance.getTraineeId());
+	}
+
+	@Override
+	public int insertAttendance() {
+		// TODO Auto-generated method stub `id`, `trainee_id`, `count`
+		String INSERT_QUERY="insert into trainee_attendance_count(count) values(?)";
+		return jdbcTemplate.update(INSERT_QUERY,0);
+	}
+
+	@Override
+	public int markTotalAttendanceCount(int id) {
+		// TODO Auto-generated
+		String UPDATE_QUERY="update trainee_attendance_count set count=count+1 where id=?";
+		return jdbcTemplate.update(UPDATE_QUERY,id);
+	}
+
+	
+
+}

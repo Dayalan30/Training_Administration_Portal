@@ -1,0 +1,372 @@
+package tap.app.controller;
+
+import java.sql.Date;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.HttpRequest;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import tap.app.repository.AdminDao;
+import tap.app.repository.CourseDao;
+import tap.app.repository.TableDataDao;
+import tap.app.repository.TraineeDao;
+import tap.app.repository.TrainerDao;
+import tap.app.entities.AdminReg;
+import tap.app.entities.AssignDetails;
+import tap.app.entities.Course;
+import tap.app.entities.TableData;
+import tap.app.entities.Trainee;
+import tap.app.entities.TraineeAttendance;
+import tap.app.entities.Trainer;
+import tap.app.entities.TrainerAttendance;
+import tap.app.entities.TrainerFeedBack;
+import tap.app.entities.TableData;
+import tap.app.repository.TableDataDao;
+import tap.app.entities.AdminLogin;
+import tap.app.utils.*;
+
+@Controller
+
+public class AdminController {
+	@Autowired
+	AdminDao adminDao;
+	@Autowired
+	TrainerDao trainerDao;
+	@Autowired
+	TraineeDao traineeDao;
+	@Autowired
+	CourseDao courseDao;
+	@Autowired
+	TableDataDao tableDataDao;
+
+	@GetMapping("/")
+	public String openWelcomePage() {
+		return "welcome";
+	}
+
+	@GetMapping("/openAdminRegisterPage")
+	public String openRegisterAdminPage() {
+		return "register_admin";
+	}
+
+	@GetMapping("/registerAdmin")
+	public String handleRegisterAdminRequest(
+
+			@RequestParam("fullname") String fullName, @RequestParam("email") String emailId,
+			@RequestParam("password") String password, @RequestParam("mobile") String mobileNo,
+			@RequestParam("dateofbirth") String dateOfBirth, @RequestParam("gender") String gender
+
+	) {
+
+		Date dob = Date.valueOf(dateOfBirth);
+		if (gender.equals("male"))
+			gender = "m";
+		if (gender.equals("female"))
+			gender = "f";
+		if (gender.equals("others"))
+			gender = "o";
+		AdminReg adminReg = new AdminReg(fullName, emailId, password, mobileNo, dob, gender, false, false);
+
+		int result = adminDao.insertAdmin(adminReg);
+		System.out.println(adminReg);
+		if (result == 0) {
+			return "failure";
+
+		} else {
+			return "success";
+		}
+
+	}
+
+	@GetMapping("/openAdminLoginPage")
+	public String openAdminLoginPage() {
+		return "login_admin";
+	}
+
+	@GetMapping("/loginAdmin")
+	public String loginAdmin(@RequestParam("email") String emailId, @RequestParam("password") String password,
+			HttpServletRequest request) {
+		System.out.println(emailId);
+		System.out.println(password);
+
+		HttpSession session = request.getSession();
+
+		AdminLogin loginData = adminDao.getPasswordData(emailId);
+		AdminReg adminReg = adminDao.getProfileAdmin(emailId);
+
+		System.out.println("\n Login Data: " + loginData);
+
+		String newPwdHash = Utils.generatePasswordHash(loginData.getPwdSalt() + password);
+		String pwdHashDb = loginData.getPwdHash();
+
+		System.out.println("\n newPwdHash: " + newPwdHash);
+		System.out.println("\n pwdHashDb: " + pwdHashDb);
+
+		if (newPwdHash.equals(pwdHashDb)) {
+			session.setAttribute("ProfileAdmin", adminReg);
+			if (adminDao.getRootAdmin(emailId)) {
+				return "root_admin_page";
+			}
+
+			if (adminDao.getStatusAdmin(emailId)) {
+				return "admin_page";
+			} else {
+				System.out.println("UnApproved");
+				return "login_admin";
+			}
+
+		} else {
+			return "failure";
+		}
+
+	}
+
+	@GetMapping("/admin_view")
+	public String openAdminView(Model model) {
+		List<AdminReg> adminReg = adminDao.getViewOfAdmin();
+		model.addAttribute("ViewOfAdmin", adminReg);
+		return "admin_view";
+	}
+
+	@GetMapping("/revokeAdmin")
+	public String openAdminRevoke(@RequestParam("id") String id, Model model) {
+		System.out.println("Id : " + id);
+		int result = adminDao.revokeAdmin(Integer.parseInt(id));
+
+		if (result == 1) {
+			return "admin_revoke";
+		} else {
+			return "failure";
+		}
+	}
+
+	@GetMapping("/grantAdmin")
+	public String openAdminGrant(@RequestParam("id") String id, Model model) {
+		System.out.println("Id : " + id);
+		int result = adminDao.grantAdmin(Integer.parseInt(id));
+
+		if (result == 1) {
+			return "admin_grant";
+		} else {
+			return "failure";
+		}
+	}
+
+	@GetMapping("/admin_profile")
+	public String OpenAdminProfile(HttpSession session, Model model) {
+		AdminReg profileAdmin = (AdminReg) session.getAttribute("ProfileAdmin");
+
+		if (profileAdmin != null) {
+			System.out.println(profileAdmin);
+			return "admin_profile";
+		} else {
+			return "login_admin";
+		}
+	}
+
+	@GetMapping("/logout")
+	public String Adminlogout(HttpSession session, Model model) {
+
+		session.invalidate();
+		return "login_admin";
+
+	}
+
+	@GetMapping("/trainer_view")
+	public String openTrainerDetails(Model model) {
+
+		List<Trainer> trainer = trainerDao.getViewOfTrainer();
+		model.addAttribute("ViewOfTrainer", trainer);
+		return "trainer_view";
+	}
+
+	@GetMapping("/revokeTrainer")
+	public String openTrainerRevoke(@RequestParam("id") String id, Model model) {
+		System.out.println("Id : " + id);
+		int result = trainerDao.revokeTrainer(Integer.parseInt(id));
+
+		if (result == 1) {
+			return "trainer_revoke";
+		} else {
+			return "failure";
+		}
+
+	}
+
+	@GetMapping("/grantTrainer")
+	public String openTrainerGrant(@RequestParam("id") String id, Model model) {
+		System.out.println("Id : " + id);
+		int result = trainerDao.grantTrainer(Integer.parseInt(id));
+
+		if (result == 1) {
+			return "trainer_grant";
+		} else {
+			return "failure";
+		}
+	}
+
+	@GetMapping("/trainee_view")
+	public String openViewTrainee(Model model) {
+		List<Trainee> trainee = traineeDao.getViewOfTrainee();
+
+		model.addAttribute("ViewOfTrainee", trainee);
+		return "trainee_view";
+
+	}
+
+	@GetMapping("/revokeTrainee")
+	public String openTraineeRevoke(@RequestParam("id") String id, Model model) {
+		System.out.println("Id : " + id);
+		int result = traineeDao.revokeTrainee(Integer.parseInt(id));
+
+		if (result == 1) {
+			return "trainee_revoke";
+		} else {
+			return "failure";
+		}
+
+	}
+
+	@GetMapping("/grantTrainee")
+	public String openTraineeGrant(@RequestParam("id") String id, Model model) {
+		System.out.println("Id : " + id);
+		int result = traineeDao.grantTrainee(Integer.parseInt(id));
+
+		if (result == 1) {
+			return "trainee_grant";
+		} else {
+			return "failure";
+		}
+	}
+
+	@GetMapping("/course_details")
+	public String openCourseDetails() {
+		return "course_details";
+	}
+
+	@GetMapping("/courseDetails")
+	public String handleRegisterAdminRequest(@RequestParam("company") String company,
+			@RequestParam("courses") String courseName, @RequestParam("trainerName") String trainerName,
+			@RequestParam("startingDate") String startingDate, @RequestParam("endingDate") String endingDate,
+			@RequestParam("location") String location, @RequestParam("feeAmount") double feeAmount,
+			@RequestParam("discount") double discount, @RequestParam("batchSize") int batchSize,
+			@RequestParam("batchName") String batchName
+
+	) {
+		Date startDate = Date.valueOf(startingDate);
+		Date endDate = Date.valueOf(endingDate);
+
+		Course course = new Course(courseName, trainerName, startDate, endDate, location, batchSize, company,
+				batchName);
+
+		System.out.println(course);
+
+		int result = courseDao.insertCourse(course);
+		if (result == 0) {
+			return "failure";
+
+		} else {
+			return "success";
+		}
+
+	}
+
+	@GetMapping("/assign_list")
+	public String openAssign(Model model) {
+		List<AssignDetails> assignList = adminDao.getJoin();
+		model.addAttribute("AssignList", assignList);
+		model.addAttribute("CourseList", assignList);
+		return "assign_list";
+	}
+
+	@RequestMapping("/tablesPage")
+	public String showTablesPage(Model model) {
+		Map<String, List<TableData>> tablesData = tableDataDao.getAllTableData();
+		model.addAttribute("tablesData", tablesData);
+		return "course_table_details";
+	}
+
+	@GetMapping("/openAdminUpdate")
+	public String openAdminUpdate(@RequestParam("id") String id, Model model) {
+		System.out.println("Id : " + id);
+		AdminReg admin = adminDao.getId(Integer.parseInt(id));
+
+		model.addAttribute("AdminUpdate", admin);
+
+		return "admin_update";
+	}
+
+	@GetMapping("/updateAdmin")
+	public String updateAdmin(@ModelAttribute AdminReg adminreg, Model model) {
+		int result = adminDao.updateAdmin(adminreg);
+
+		if (result == 1) {
+			return "redirect:admin_profile";
+		} else {
+			return "failure";
+		}
+	}
+
+	@GetMapping("/openAllTrainerFeedbackReport")
+	public String openTrainerFeedbackReport(Model model) {
+		
+		List<TrainerFeedBack>feedBack=adminDao.getAllTrainerFeedbackReport();
+		
+		model.addAttribute("TrainerFeedBack", feedBack);
+		
+		
+		return "trainer_feedback_report";
+
+}
+	@GetMapping("/openAllTraineeAttendance")
+	public String openTraineeAttendanceCount(Model model)
+	
+	{
+		List<TraineeAttendance>traineeAttendance=adminDao.getAllTraineeAttendance();
+		
+		model.addAttribute("TraineeAttendance",traineeAttendance);
+		
+		return "trainee_attendance_count";
+	}
+
+	@GetMapping("/openTraineeAttendanceReport")
+	public String openTraineeAttendanceReport(@RequestParam("emailId")String traineeEmailId,Model model)
+	{
+		List<TraineeAttendance>traineeAttendance=adminDao.getTraineeAttendance(traineeEmailId);
+		
+		model.addAttribute("TraineeAttendance",traineeAttendance);
+		
+		return "trainee_attendance_report";
+	}
+	
+	@GetMapping("/openAllTrainerAttendance")
+	public String openTrainerAttendancePage(Model model) {
+
+		List<Trainer>trainer=trainerDao.getViewOfTrainer();
+		model.addAttribute("ViewOfTrainer",trainer);
+		
+		return "trainer_attendance_count";
+	}
+	@GetMapping("/openAllTrainerAttendanceReport")
+	public String openTrainerAttendanceReport(@RequestParam("emailId")String trainerEmailId,Model model)
+	{
+		List<TrainerAttendance>trainerAttendance=adminDao.getTrainerAttendance(trainerEmailId);
+		model.addAttribute("TrainerAttendance",trainerAttendance);
+		
+		return "trainer_attendance_report";
+	}
+	
+}
+
+
